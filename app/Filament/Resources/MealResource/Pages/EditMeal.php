@@ -1,5 +1,3 @@
-<?php
-
 namespace App\Filament\Resources\MealResource\Pages;
 
 use App\Filament\Resources\MealResource;
@@ -17,13 +15,8 @@ class EditMeal extends EditRecord
         ];
     }
 
-    protected function mutateFormDataBeforeSave(array $data): array
+    protected function getRedirectUrl(): string
     {
-        if (! empty(trim((string) ($data['brand_new'] ?? '')))) {
-            $data['brand'] = trim((string) $data['brand_new']);
-        }
-        unset($data['brand_new']);
-
-        return $data;
+        return $this->getResource()::getUrl('index');
     }
 }

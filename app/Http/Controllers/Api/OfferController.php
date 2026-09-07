@@ -17,12 +17,7 @@ class OfferController extends Controller
         return OfferResource::collection($this->offers->search($request->validated()));
     }
 
-    public function featured()
-    {
-        return OfferResource::collection($this->offers->featured());
-    }
-
-    public function showByCode(string $code)
+    public function show(string $code)
     {
         return new OfferResource($this->offers->byCode($code));
     }

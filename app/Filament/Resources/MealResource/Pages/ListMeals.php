@@ -1,5 +1,3 @@
-<?php
-
 namespace App\Filament\Resources\MealResource\Pages;
 
 use App\Filament\Resources\MealResource;

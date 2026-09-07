@@ -3,6 +3,9 @@
 /public/hot
 /public/storage
 /storage/*.key
+/storage/framework/testing
+/storage/PsySH
+/database/*.sqlite
 .env
 .env.backup
 .env.production

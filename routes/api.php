@@ -2,9 +2,11 @@
 
 use App\Http\Controllers\Api\Auth\GoogleAuthController;
 use App\Http\Controllers\Api\DataManagementController;
-use App\Http\Controllers\Api\FaqController as ApiFaqController;
+use App\Http\Controllers\Api\DeleteProfileImageController;
 use App\Http\Controllers\Api\FaqController;
+use App\Http\Controllers\Api\FaqController as ApiFaqController;
 use App\Http\Controllers\Api\FavoriteController;
+use App\Http\Controllers\Api\FeaturedOfferController;
 use App\Http\Controllers\Api\LoyaltyController;
 use App\Http\Controllers\Api\MealController;
 use App\Http\Controllers\Api\NotificationController;
@@ -13,6 +15,7 @@ use App\Http\Controllers\Api\OfferController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\ProfileController;
+use App\Http\Controllers\Api\ProfileSessionsController;
 use App\Http\Controllers\Api\SettingController;
 use App\Http\Controllers\Api\SmartListController;
 use App\Http\Controllers\Api\SpecialNoteController;
@@ -22,27 +25,24 @@ use App\Http\Controllers\Api\StripeController;
 use App\Http\Controllers\Api\StripeWebhookController;
 use App\Http\Controllers\Api\SubcategoryController;
 use App\Http\Controllers\Api\SupportController;
+use App\Http\Controllers\Api\TrackOrderController;
+use App\Http\Controllers\Api\UpdateProfileImageController;
+use App\Http\Controllers\Api\UpdateProfileInfoController;
 use App\Http\Controllers\Api\UserAppSettingsController;
-
 // V1 Controllers Included Below
 use App\Http\Controllers\Api\V1\AddressController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CartController;
 use App\Http\Controllers\Api\V1\CategoryController;
+use App\Http\Controllers\Api\V1\CategoryController as ApiCategoryController;
 use App\Http\Controllers\Api\V1\ChatbotController;
 use App\Http\Controllers\Api\V1\ContactController;
 use App\Http\Controllers\Api\V1\DashboardController;
-
-use App\Http\Controllers\Api\V1\CategoryController as ApiCategoryController;
-use App\Http\Controllers\Api\V1\InvoiceController;
 use App\Http\Controllers\Api\V1\MealController as ApiMealController;
-
 use App\Jobs\CreateInvoiceJob;
 use App\Jobs\SendEmailJob;
 use App\Jobs\SendInvoiceEmailJob;
 use App\Jobs\SendInvoiceJob;
-use App\Jobs\SendToInventroyJob;
-
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Route;
@@ -52,8 +52,7 @@ use Illuminate\Support\Facades\Route;
 | API Routes
 |--------------------------------------------------------------------------
 */
-
-Route::get("/send-email", function (Request $request) {
+Route::get('/send-email', function (Request $request) {
     $email = $request->query('email', 'omar-elsayed@example.com');
 
     Bus::chain([
@@ -62,13 +61,13 @@ Route::get("/send-email", function (Request $request) {
     ])->dispatch();
 
     return response()->json([
-        "message" => "Email job dispatched successfully",
-        "email" => $email, 
+        'message' => 'Email job dispatched successfully',
+        'email' => $email,
     ]);
 });
 
-Route::prefix("v1")->group(function(){
-   Route::get("/meals",[MealController::class,"index"]);
+Route::prefix('v1')->group(function () {
+    Route::get('/meals', [MealController::class, 'index']);
 });
 
 Route::get('/send-email', function () {
@@ -83,7 +82,7 @@ Route::get('/send-invoice', function () {
     );
 
     return response()->json([
-        'message' => 'Job queued successfully'
+        'message' => 'Job queued successfully',
     ]);
 });
 
@@ -118,10 +117,10 @@ Route::middleware('auth:sanctum')->group(function () {
     // Profile routes
     Route::prefix('profile')->group(function () {
         Route::get('/', [ProfileController::class, 'show']);
-        Route::post('/image', [ProfileController::class, 'updateImage']);
-        Route::put('/info', [ProfileController::class, 'updateInfo']);
-        Route::delete('/image', [ProfileController::class, 'deleteImage']);
-        Route::get('/sessions', [ProfileController::class, 'sessions']);
+        Route::post('/image', UpdateProfileImageController::class);
+        Route::put('/info', UpdateProfileInfoController::class);
+        Route::delete('/image', DeleteProfileImageController::class);
+        Route::get('/sessions', ProfileSessionsController::class);
         Route::delete('/sessions/{tokenId}', [ProfileController::class, 'destroySession']);
     });
 
@@ -194,7 +193,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('orders')->group(function () {
         Route::post('/', [OrderController::class, 'store']);
         Route::get('/', [OrderController::class, 'index']);
-        Route::get('/track', [OrderController::class, 'track']);
+        Route::get('/track', TrackOrderController::class);
         Route::get('/{id}', [OrderController::class, 'show']);
     });
 
@@ -251,9 +250,9 @@ Route::get('special-notes', [SpecialNoteController::class, 'index']);
 
 Route::prefix('offers')->group(function () {
     Route::get('/', [OfferController::class, 'index']);
-    Route::get('/featured', [OfferController::class, 'featured']);
+    Route::get('/featured', FeaturedOfferController::class);
     Route::get('/validate', [OfferController::class, 'validateOffer']);
-    Route::get('/{code}', [OfferController::class, 'showByCode']);
+    Route::get('/{code}', [OfferController::class, 'show']);
 });
 
 // Categories routes (V1 CategoryController)

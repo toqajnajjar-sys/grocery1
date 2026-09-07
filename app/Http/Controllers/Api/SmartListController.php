@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Actions\CreateSmartListAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\AddSmartListMealRequest;
 use App\Http\Requests\Api\SmartListRequest;
@@ -11,7 +12,7 @@ use Illuminate\Http\Request;
 
 class SmartListController extends Controller
 {
-    public function __construct(private SmartListService $lists) {}
+    public function __construct(private SmartListService $lists, private CreateSmartListAction $createList) {}
 
     public function index(Request $request)
     {
@@ -22,7 +23,7 @@ class SmartListController extends Controller
     public function store(SmartListRequest $request)
     {
         return response()->json(['success' => true, 'message' => 'Wish list created successfully',
-            'data' => new SmartListResource($this->lists->create($request->user()->id, $request->validated()))]);
+            'data' => new SmartListResource($this->createList->execute($request->user()->id, $request->validated()))]);
     }
 
     public function show(Request $request, string $id)

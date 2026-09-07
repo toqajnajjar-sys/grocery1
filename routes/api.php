@@ -1,7 +1,5 @@
 <?php
 
-use  App\Jobs\SendInvoiceEmailJob;
-use  App\Jobs\SendToInventroyJob;
 use App\Http\Controllers\Api\AddressController;
 use App\Http\Controllers\Api\Auth\GoogleAuthController;
 use App\Http\Controllers\Api\AuthController;
@@ -11,9 +9,11 @@ use App\Http\Controllers\Api\ChatbotController;
 use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\DataManagementController;
-use App\Http\Controllers\Api\FaqController as ApiFaqController;
+use App\Http\Controllers\Api\DeleteProfileImageController;
 use App\Http\Controllers\Api\FaqController;
+use App\Http\Controllers\Api\FaqController as ApiFaqController;
 use App\Http\Controllers\Api\FavoriteController;
+use App\Http\Controllers\Api\FeaturedOfferController;
 use App\Http\Controllers\Api\LoyaltyController;
 use App\Http\Controllers\Api\MealController;
 use App\Http\Controllers\Api\NotificationController;
@@ -22,6 +22,7 @@ use App\Http\Controllers\Api\OfferController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\ProfileController;
+use App\Http\Controllers\Api\ProfileSessionsController;
 use App\Http\Controllers\Api\SettingController;
 use App\Http\Controllers\Api\SmartListController;
 use App\Http\Controllers\Api\SpecialNoteController;
@@ -30,19 +31,21 @@ use App\Http\Controllers\Api\StripeCheckoutController;
 use App\Http\Controllers\Api\StripeController;
 use App\Http\Controllers\Api\StripeWebhookController;
 use App\Http\Controllers\Api\SubcategoryController;
-use App\Jobs\CreateInvoiceJob;
-use App\Jobs\SendEmailJob;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Bus;
 use App\Http\Controllers\Api\SupportController;
+use App\Http\Controllers\Api\TrackOrderController;
+use App\Http\Controllers\Api\UpdateProfileImageController;
+use App\Http\Controllers\Api\UpdateProfileInfoController;
 use App\Http\Controllers\Api\UserAppSettingsController;
 use App\Http\Controllers\Api\V1\CategoryController as ApiCategoryController;
-use App\Http\Controllers\Api\V1\InvoiceController;
 use App\Http\Controllers\Api\V1\MealController as ApiMealController;
-use Illuminate\Support\Facades\Route;
-use App\Traits\V1;
-
+use App\Jobs\CreateInvoiceJob;
+use App\Jobs\SendEmailJob;
+use App\Jobs\SendInvoiceEmailJob;
 use App\Jobs\SendInvoiceJob;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\Route;
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -53,7 +56,7 @@ use App\Jobs\SendInvoiceJob;
 | be assigned to the "api" middleware group. Make something great!
 |
 */
-Route::get("/send-email", function (Request $request) {
+Route::get('/send-email', function (Request $request) {
     $email = $request->query('email', 'omar-elsayed@example.com');
 
     Bus::chain([
@@ -62,23 +65,14 @@ Route::get("/send-email", function (Request $request) {
     ])->dispatch();
 
     return response()->json([
-        "message" => "Email job dispatched successfully",
-        "email" => $email, 
+        'message' => 'Email job dispatched successfully',
+        'email' => $email,
     ]);
 });
 
-Route::prefix("v1")->group(function(){
-   Route::get("/meals",[MealController::class,"index"]);
+Route::prefix('v1')->group(function () {
+    Route::get('/meals', [MealController::class, 'index']);
 });
-
-
-
-
-
-
-
-
-
 
 Route::get('/send-email', function () {
     SendInvoiceEmailJob::dispatch();
@@ -86,26 +80,22 @@ Route::get('/send-email', function () {
     return response()->json(['message' => 'Invoice email dispatched']);
 });
 
-    
 Route::get('/send-invoice', function () {
 
-sendInvoiceJob::dispatch(
+    SendInvoiceJob::dispatch(
 
-    'samiralsaied07@gmail.com',
-);
+        'samiralsaied07@gmail.com',
+    );
 
     return response()->json([
-        'message' => 'Job queued successfully'
+        'message' => 'Job queued successfully',
     ]);
 });
 
 Route::prefix('v1')->group(function () {
     Route::get('/meals', [ApiMealController::class, 'index']);
-         Route::get('/categories', [ApiCategoryController::class, 'index']);
+    Route::get('/categories', [ApiCategoryController::class, 'index']);
     Route::get('/faqs', [ApiFaqController::class, 'index']);
-
-
-
 
 });
 
@@ -134,10 +124,10 @@ Route::middleware('auth:sanctum')->group(function () {
     // Profile routes
     Route::prefix('profile')->group(function () {
         Route::get('/', [ProfileController::class, 'show']);
-        Route::post('/image', [ProfileController::class, 'updateImage']);
-        Route::put('/info', [ProfileController::class, 'updateInfo']);
-        Route::delete('/image', [ProfileController::class, 'deleteImage']);
-        Route::get('/sessions', [ProfileController::class, 'sessions']);
+        Route::post('/image', UpdateProfileImageController::class);
+        Route::put('/info', UpdateProfileInfoController::class);
+        Route::delete('/image', DeleteProfileImageController::class);
+        Route::get('/sessions', ProfileSessionsController::class);
         Route::delete('/sessions/{tokenId}', [ProfileController::class, 'destroySession']);
     });
 
@@ -219,7 +209,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('orders')->group(function () {
         Route::post('/', [OrderController::class, 'store']);
         Route::get('/', [OrderController::class, 'index']);
-        Route::get('/track', [OrderController::class, 'track']);
+        Route::get('/track', TrackOrderController::class);
         Route::get('/{id}', [OrderController::class, 'show']);
     });
 
@@ -279,9 +269,9 @@ Route::get('special-notes', [SpecialNoteController::class, 'index']);
 
 Route::prefix('offers')->group(function () {
     Route::get('/', [OfferController::class, 'index']);
-    Route::get('/featured', [OfferController::class, 'featured']);
+    Route::get('/featured', FeaturedOfferController::class);
     Route::get('/validate', [OfferController::class, 'validateOffer']);
-    Route::get('/{code}', [OfferController::class, 'showByCode']);
+    Route::get('/{code}', [OfferController::class, 'show']);
 });
 Route::prefix('categories')->group(function () {
     Route::get('/', [CategoryController::class, 'index']);

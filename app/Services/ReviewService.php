@@ -29,14 +29,9 @@ final class ReviewService
         return Review::create($data + ['user_id' => $user->id, 'is_approved' => false])->load(['user', 'meal']);
     }
 
-    public function find(string $id): Review
+    public function update(User $user, Review $review, array $data): Review
     {
-        return Review::with(['user', 'meal'])->findOrFail($id);
-    }
-
-    public function update(User $user, string $id, array $data): Review
-    {
-        $review = $this->editable($user, $id);
+        $this->ensureEditable($user, $review);
         $review->update($data);
 
         return $review->load(['user', 'meal']);
@@ -50,22 +45,25 @@ final class ReviewService
     private function editable(User $user, string $id): Review
     {
         $review = Review::findOrFail($id);
-        if ($user->id !== $review->user_id && ! $user->is_admin) {
-            throw new OperationRejected('forbidden', ['success' => false, 'message' => 'Unauthorized']);
-        }
+        $this->ensureEditable($user, $review);
 
         return $review;
     }
 
-    public function forMeal(string $mealId, int $perPage): array
+    private function ensureEditable(User $user, Review $review): void
     {
-        $meal = Meal::findOrFail($mealId);
+        if ($user->id !== $review->user_id && ! $user->is_admin) {
+            throw new OperationRejected('forbidden', ['success' => false, 'message' => 'Unauthorized']);
+        }
+    }
 
+    public function forMeal(Meal $meal, int $perPage): array
+    {
         return [
             'meal' => ['id' => $meal->id, 'name' => $meal->name,
-                'average_rating' => round(Review::getAverageRating($mealId), 1),
-                'total_reviews' => Review::getTotalReviews($mealId)],
-            'reviews' => Review::with('user')->where('meal_id', $mealId)->approved()->latest()->paginate($perPage),
+                'average_rating' => round(Review::getAverageRating($meal->id), 1),
+                'total_reviews' => Review::getTotalReviews($meal->id)],
+            'reviews' => Review::with('user')->where('meal_id', $meal->id)->approved()->latest()->paginate($perPage),
         ];
     }
 

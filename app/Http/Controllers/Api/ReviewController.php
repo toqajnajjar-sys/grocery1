@@ -8,6 +8,7 @@ use App\Http\Requests\Api\ReviewIndexRequest;
 use App\Http\Requests\StoreReviewRequest;
 use App\Http\Requests\UpdateReviewRequest;
 use App\Http\Resources\Api\ReviewResource;
+use App\Models\Review;
 use App\Services\ReviewService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\JsonResponse;
@@ -34,15 +35,15 @@ class ReviewController extends Controller
         }
     }
 
-    public function show(string $id): JsonResponse
+    public function show(Review $review): JsonResponse
     {
-        return response()->json(['success' => true, 'data' => new ReviewResource($this->reviews->find($id))]);
+        return response()->json(['success' => true, 'data' => new ReviewResource($review->load(['user', 'meal']))]);
     }
 
-    public function update(UpdateReviewRequest $request, string $id): JsonResponse
+    public function update(UpdateReviewRequest $request, Review $review): JsonResponse
     {
         try {
-            $review = $this->reviews->update($request->user(), $id, $request->validated());
+            $review = $this->reviews->update($request->user(), $review, $request->validated());
 
             return response()->json(['success' => true, 'message' => 'Review updated successfully', 'data' => new ReviewResource($review)]);
         } catch (OperationRejected $e) {
@@ -59,13 +60,6 @@ class ReviewController extends Controller
         } catch (OperationRejected $e) {
             return response()->json($e->details, 403);
         }
-    }
-
-    public function getMealReviews(string $mealId, ReviewIndexRequest $request): JsonResponse
-    {
-        $result = $this->reviews->forMeal($mealId, $request->validated('per_page', 10));
-
-        return response()->json($this->page($result['reviews']) + ['meal' => $result['meal']]);
     }
 
     public function getUserReviews(ReviewIndexRequest $request): JsonResponse

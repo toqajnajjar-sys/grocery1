@@ -22,22 +22,6 @@ final class SmartListService
         return SmartList::where('user_id', $userId)->with('meals')->findOrFail($id);
     }
 
-    public function create(int $userId, array $data): SmartList
-    {
-        $data['user_id'] = $userId;
-        $data['description'] = $data['description'] ?? '';
-        $mealIds = $data['meal_ids'] ?? [];
-        unset($data['meal_ids']);
-        $data = $this->storeImage($data);
-
-        return DB::transaction(function () use ($data, $mealIds) {
-            $list = SmartList::create($data);
-            $this->meals->make('add')->apply($list, $mealIds);
-
-            return $list->load('meals');
-        });
-    }
-
     public function update(int $userId, string $id, array $data): SmartList
     {
         $list = $this->find($userId, $id);

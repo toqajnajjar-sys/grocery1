@@ -212,26 +212,6 @@ class OrderService
         }
     }
 
-    public function index(User $user): array
-    {
-
-        $orders = Order::where('user_id', $user->id)->
-            with(['items.meal.category', 'items.meal.subcategory', 'address'])
-                ->orderBy('created_at', 'desc')
-                ->get()
-                ->map(function ($order) {
-                    return $this->formatOrder($order);
-                });
-
-        return [
-            'success' => true,
-            'message' => 'Orders retrieved successfully',
-            'data' => $orders,
-            'total_count' => $orders->count(),
-        ];
-
-    }
-
     public function track(User $user): array
     {
 

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Actions\CreateSmartListAction;
 use App\Contracts\QueryFilter;
 use App\Exceptions\OperationRejected;
 use App\Factories\OrderPlacementStrategyFactory;
@@ -11,6 +12,7 @@ use App\Factories\UploadStrategyFactory;
 use App\Http\Controllers\Api\SettingController;
 use App\Models\Offer;
 use App\Models\Order;
+use App\Models\Review;
 use App\Models\User;
 use App\Services\OfferService;
 use App\Services\OrderService;
@@ -214,7 +216,7 @@ class ControllerRefactorTest extends TestCase
     {
         DB::table('meals')->insert([['id' => 1], ['id' => 2]]);
         $service = $this->app->make(SmartListService::class);
-        $list = $service->create(1, ['name' => 'Weekly', 'meal_ids' => [1]]);
+        $list = $this->app->make(CreateSmartListAction::class)->execute(1, ['name' => 'Weekly', 'meal_ids' => [1]]);
         $list = $service->changeMeals(1, $list->id, 'add', [1, 2]);
         $this->assertEqualsCanonicalizing([1, 2], $list->meals->modelKeys());
         $list = $service->update(1, $list->id, ['name' => 'Weekly', 'description' => null]);
@@ -231,7 +233,7 @@ class ControllerRefactorTest extends TestCase
     public function test_smart_list_update_cannot_cross_user_boundary(): void
     {
         $service = $this->app->make(SmartListService::class);
-        $list = $service->create(1, ['name' => 'Private']);
+        $list = $this->app->make(CreateSmartListAction::class)->execute(1, ['name' => 'Private']);
         $this->expectException(ModelNotFoundException::class);
         $service->update(2, $list->id, ['name' => 'Changed']);
     }
@@ -239,7 +241,7 @@ class ControllerRefactorTest extends TestCase
     public function test_smart_list_creation_rolls_back_when_meal_attachment_fails(): void
     {
         try {
-            $this->app->make(SmartListService::class)->create(1, ['name' => 'Rollback', 'meal_ids' => [999]]);
+            $this->app->make(CreateSmartListAction::class)->execute(1, ['name' => 'Rollback', 'meal_ids' => [999]]);
         } catch (QueryException $e) {
             $this->assertSame(0, DB::table('smart_lists')->count());
 
@@ -279,7 +281,7 @@ class ControllerRefactorTest extends TestCase
     {
         $id = DB::table('reviews')->insertGetId(['user_id' => 1, 'meal_id' => 1, 'rating' => 5]);
         $service = $this->app->make(ReviewService::class);
-        $service->update($this->user(), $id, ['rating' => 4]);
+        $service->update($this->user(), Review::findOrFail($id), ['rating' => 4]);
         $this->assertSame(4, DB::table('reviews')->value('rating'));
         $admin = $this->user(2);
         $admin->is_admin = true;
